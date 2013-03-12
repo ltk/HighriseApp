@@ -2,6 +2,7 @@
 source 'https://rubygems.org'
  
 gem "sinatra"
+gem "highrise"
 
 group :test do
   gem "rack-test"
