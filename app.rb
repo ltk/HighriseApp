@@ -1,123 +1,180 @@
 require 'sinatra'
+require 'pry'
+require 'logger'
 
-module WrapperExtension  
-  Highrise::Deal.class_eval do
-    def date_range
-      @date_range ||= parse_date_range(background)
-    end
+ActiveResource::Base.logger = Logger.new(STDOUT)
 
-    def loe
-      @loe ||= price.to_f/(date_range.last - date_range.first)
-    end
+module ActiveModel
+  module Serializers
+    module Xml
 
-    def likelihood
-      @likelihood ||= parse_likelihood(background)
-    end
+      class Serializer
+        class Attribute
 
-    private
+        protected
 
-    def parse_likelihood(text)
-      text =~ /\[([\d]{1,3})%\]/
-      $1
-    end
+          def compute_type
+            return if value.nil?
+            type = ActiveSupport::XmlMini::TYPE_NAMES[value.class.name]
+            type ||= :string if value.respond_to?(:to_str)
+            type ||= :yaml
+            type
+          end
 
-    def parse_date_range(text)
-      text =~ /\[([\d\/]*)\s?to\s?([\d\/]*)\]/
-      start_date_string = $1
-      end_date_string = $2
-
-      # use Date.strptime instead
-      start_date_string =~ /([\d]{1,2})\/((?:[\d]{4}|[\d]{2}))/
-      if $2.length == 2
-        start_year_string = "20#{$2}"
-      else
-        start_year_string = $2
+        end
       end
-      start_date = Date.parse("01/#{$1}/#{start_year_string}")
 
-      # end
-      end_date_string =~ /([\d]{1,2})\/((?:[\d]{4}|[\d]{2}))/
-      if $2.length == 2
-        end_year_string = "20#{$2}"
-      else
-        end_year_string = $2
-      end
-      end_date = Date.parse("01/#{$1}/#{end_year_string}")
-
-
-      (start_date..end_date)
     end
   end
 end
 
-class Visualization
-  def initialize(data, params)
-    @data = data
-    @start_date = params[:start_date] || Date.today
-    @end_date = params[:end_date] || Date.today + 365
-  end
+module WrapperExtension
 
-  def data_array
-    months = []
-    (@start_date.year..@end_date.year).each do |y|
-       mo_start = (@start_date.year == y) ? @start_date.month : 1
-       mo_end = (@end_date.year == y) ? @end_date.month : 12
+  Highrise::Deal.class_eval do
+   
+    FORECAST_DATA_START = "##Highrise Forecast Data##"
+    FORECAST_DATA_END = "#####################"
+    START_DATE_TEMPLATE = "Expected Start Date: "
+    CLOSE_DATE_TEMPLATE = "Expected Close Date: "
+    PROBABILITY_TEMPLATE = "Probability: "
 
-       (mo_start..mo_end).each do |m|  
-           months << "#{m}/#{y}"
-       end
+    def forecast_data?
+      !forecast_data.nil?
     end
 
-    array = []
-
-    header_array = ["Month"]
-    @data.each do |datum|
-      header_array.push datum.name
+    def write_forecast_data
+      strip_forecast_string
+      self.background = background + forecast_data_string
     end
 
-    array.push(header_array)
+    def start_date=(int)
+      @start_date = int
+    end
 
-    months.each do |date|
-      date_date = Date.parse(date)
-      row = [date]
-      @data.each do |datum|
-        if datum.date_range.include?(date_date)
-          row.push(datum.loe)
-        else
-          row.push(0)
-        end
+    def start_date
+      if @start_date
+        @start_date
+      else
+        forecast_data =~ /^#{START_DATE_TEMPLATE}(.+)$/
+        $1 || created_at + (60 * 60 * 24 * 75)
       end
-      array.push(row)
     end
 
-    array
+    def close_date=(int)
+      @close_date = int
+    end
+
+    def close_date
+      if @close_date
+        @close_date
+      else
+        forecast_data =~ /^#{CLOSE_DATE_TEMPLATE}(.+)$/
+        $1 || created_at + (60 * 60 * 24 * 75)
+      end
+    end
+
+    def probability=(int)
+      @probability = int
+    end
+
+    def probability
+      if @probability
+        @probability
+      else
+        forecast_data =~ /^#{PROBABILITY_TEMPLATE}(.+)$/
+        $1 || 10
+      end
+    end
+
+    private
+
+    def strip_forecast_string
+      background.gsub!(/##Highrise Forecast Data##(.*)#####################/m, "")
+    end
+
+    def forecast_data
+      @forecast_data || parse_forecast_data(background)
+    end
+
+    def forecast_data_string
+      %Q(\n\n#{FORECAST_DATA_START}\n#{START_DATE_TEMPLATE}#{start_date}\n#{CLOSE_DATE_TEMPLATE}#{close_date}\n#{PROBABILITY_TEMPLATE}#{probability}\n#{FORECAST_DATA_END})
+    end
+
+    def parse_forecast_data(text)
+      text =~ /##Highrise Forecast Data##(.*)#####################/m
+      $1
+    end
+
+    def reject_party
+      self.attributes.reject!{|k,v| k == "party"}
+    end
+
+    
   end
 end
 
 def comma_numbers(number, delimiter = ',')
   number.to_s.reverse.gsub(%r{([0-9]{3}(?=([0-9])))}, "\\1#{delimiter}").reverse
 end
+
 class HighriseApp < Sinatra::Base
-  get "/" do
+  def boot_highrise
     secrets = YAML.load_file('config/secrets.yml')
 
     @highrise_url = secrets.fetch('highrise')['site']
     Highrise::Base.site = @highrise_url
     Highrise::Base.user = secrets.fetch('highrise')['api-token']
-    Highrise::Base.format = secrets.fetch('highrise')['format']
+    # Highrise::Base.format = secrets.fetch('highrise')['format']
+  end
+
+  get "/deal/:deal_id/edit" do
+    boot_highrise
+
+    @deal = Highrise::Deal.find(params[:deal_id])
+    erb :edit
+  end
+
+  post "/deal/:deal_id" do
+    boot_highrise
+
+    deal = Highrise::Deal.find(params[:deal_id])
+    if request.POST.has_key?("probability")
+      deal.probability = request.POST["probability"]
+    end
+
+    if request.POST.has_key?("start_date")
+      deal.start_date = Date.parse(request.POST["start_date"])
+    end
+
+    if request.POST.has_key?("close_date")
+      deal.close_date = Date.parse(request.POST["close_date"])
+    end
+
+    deal.write_forecast_data
+
+    deal.attributes.reject!{|k,v| k == "party"}
+    deal.save
+
+    redirect to("/")
+  end
+
+  get "/" do
+    boot_highrise
 
     @deals = Highrise::Deal.find(:all)
 
-    # Get last projected end date
-    last_date = Date.today
+   
     @deals.each do |deal|
-      if deal.date_range.last.to_time > last_date.to_time
-        last_date = deal.date_range.last
-      end 
+      
+      deal.attributes.reject!{|k,v| k == "party"}
+    
+      unless deal.forecast_data?
+        deal.write_forecast_data
+        deal.save
+      end
+      print "\n#{deal.start_date}\n"
+      
     end
-
-    # Make the data array for the google chart
-    @viz = Visualization.new(@deals, :start_date => Date.today, :end_date => last_date)
 
     erb :index
   end

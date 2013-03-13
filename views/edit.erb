@@ -52,25 +52,14 @@
   <div class="container">
     <div class="row">
       <div class="span12">
-        <h1>Deals</h1>
-        <ul class="deals row">
-          <% @deals.each do |d| %>
-            <li class="media span4">
-              <a class="pull-left" href="#">
-                <img class="media-object" src="<%= d.parties.first.avatar_url %>">
-              </a>
-              <div class="media-body">
-                <h4 class="media-heading"><a href="<%= @highrise_url %>/deals/<%= d.id %>" title="View <%= d.name %> on Highrise" target="_blank"><%= d.name %></a></h4>
-                <h3><a href="<%= @highrise_url %>/companies/<%= d.parties.first.id %>" title="View <%= d.parties.first.name %> on Highrise" target="_blank"><%= d.parties.first.name %></a></h3>
-                <h4>Start Date: <%= Date.parse(d.start_date).strftime("%Y-%m-%d") %></h4>
-                <h4>Close Date: <%= Date.parse(d.close_date).strftime("%Y-%m-%d") %></h4>
-                <h4>Probability: <%= d.probability %></h4>
-                <h4>Budget: $<%= comma_numbers(d.price) %></h4>
-                <a href="/deal/<%= d.id %>/edit" title="Edit Deal">Edit Deal</a>
-              </div>
-            </li>
-          <% end %>
-        </ul>
+        <form action="/deal/<%= @deal.id %>" method="post">
+          <a href="/" title="Back to Deals">View All Deals</a>
+          <h1>Editing <%= @deal.name %></h1>
+          <p><strong>Close Date:</strong> <input type="date" name="close_date" value="<%= Date.parse(@deal.close_date).strftime("%Y-%m-%d") %>"></p>
+          <p><strong>Start Date:</strong> <input type="date" name="start_date" value="<%= Date.parse(@deal.start_date).strftime("%Y-%m-%d") %>"></p>
+          <p><strong>Probability:</strong> <input type="range" value="<%= @deal.probability %>" name="probability" min="0" max="100" /></p>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </form>
       </div>
     </div>
   </div>
