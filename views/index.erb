@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css" rel="stylesheet">
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" ></script>
   <script type="text/javascript" src="https://www.google.com/jsapi"></script>
   <script type="text/javascript">
     google.load('visualization', '1', {packages: ['corechart']});
@@ -9,10 +10,16 @@
   <style type="text/css">
     ul.deals {
       list-style: none;
+      padding-top: 20px;
     }
 
     ul.deals li {
-      margin-top: 0;
+      margin-top: 0px;
+      box-sizing: border-box;
+      position: relative;
+      top: 0;
+      -webkit-transition-property: top;
+      -webkit-transition-duration: 0.5s;
     }
 
     ul.deals li h2 {
@@ -33,6 +40,16 @@
     ul.deals li h4 a {
       font-weight: bold;
     }
+
+    ul.deals li span.label {
+      font-size: 14px;
+      line-height: 17px;
+    }
+
+    ul.deals li.active {
+      position: relative;
+      top: -25px;
+    }
   </style>
 </head>
 <body>
@@ -40,44 +57,71 @@
     <div class="row">
       <div class="span12">
         <h1>Deal Forecast</h1>
-        <div id="deal-forecast" style="width: 1170px; height: 500px;"></div>
+        <div id="deal-forecast" style="width: 1100px; height: 500px;"></div>
         <h1>Deals</h1>
         <ul class="deals row">
 
-
+          <% i = 1 %>
           <% @deals.each do |d| %>
-            <li class="media span4">
+            <li class="media span4 deal-<%= i %>">
               <a class="pull-left" href="#">
                 <img class="media-object" src="<%= d.parties.first.avatar_url %>">
               </a>
               <div class="media-body">
                 <h4 class="media-heading"><a href="<%= @highrise_url %>/deals/<%= d.id %>" title="View <%= d.name %> on Highrise" target="_blank"><%= d.name %></a></h4>
-                <h3><%= d.parties.first.name %></h3>
+                <% if d.likelihood %>
+                <span class="label" style="background-color: hsl(<%= d.likelihood.to_f %>,100%,30%);"><%= d.likelihood %>% Closing Probability</span>
+                <% end %>
+                <h3><a href="<%= @highrise_url %>/companies/<%= d.parties.first.id %>" title="View <%= d.parties.first.name %> on Highrise" target="_blank"><%= d.parties.first.name %></a></h3>
                 <h3><%= d.date_range.first.strftime("%m/%Y") %> to <%= d.date_range.last.strftime("%m/%Y") %></h3>
                 <h4>$<%= comma_numbers(d.price) %> total | $<%= comma_numbers(d.loe.round) %>/day</h4>
               </div>
             </li>
+            <% i += 1 %>
           <% end %>
         </ul>
       </div>
     </div>
   </div>
   <script type="text/javascript">
+  var wrapper;
+
   function drawVisualization() {
     // Create and populate the data table.
-    var data = google.visualization.arrayToDataTable(<%= @visualization_array %>);
+    var data = google.visualization.arrayToDataTable(<%= @viz.data_array %>);
 
     // Create and draw the visualization.
-    new google.visualization.ColumnChart(document.getElementById('deal-forecast')).
-        draw(data,
-             {isStacked:true,
-              width:1170, height:500,
+    wrapper = new google.visualization.ColumnChart(document.getElementById('deal-forecast'))
+
+    google.visualization.events.addListener(wrapper, 'ready', onReady);
+
+    wrapper.draw(data,
+             {title: "Projected Dollars per Day Sales by Month",
+              isStacked:true,
+              width:1100, height:500,
               hAxis: {title: "Month"},
               vAxis: {format: "$# per day"}}
         );
+
+
+    function onReady() {
+      google.visualization.events.addListener(wrapper, 'onmouseover', overHandler);
+      google.visualization.events.addListener(wrapper, 'onmouseout', outHandler);
+    }
+
+    function overHandler(e) {
+      wrapper.setSelection([e]);
+      $("li.deal-" + e.column).addClass('active');
+    }
+
+    function outHandler(e) {
+      wrapper.setSelection([{'row': null, 'column': null}]);
+      $("li.deal-" + e.column).removeClass('active');
+    }
   }
 
   google.setOnLoadCallback(drawVisualization);
+
   </script>
 </body>
 </html>
