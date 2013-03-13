@@ -63,7 +63,7 @@
 
           <% i = 1 %>
           <% @deals.each do |d| %>
-            <li class="media span4 deal-<%= i %>">
+            <li class="media span4 deal-<%= i %>" data-deal="<%= i %>">
               <a class="pull-left" href="#">
                 <img class="media-object" src="<%= d.parties.first.avatar_url %>">
               </a>
@@ -119,6 +119,17 @@
       $("li.deal-" + e.column).removeClass('active');
     }
   }
+
+  $(".deals li").hover(
+    function(){
+      deal = $(this).attr("data-deal")
+      wrapper.setSelection([{'row': null, 'column': deal}]);
+    },
+    function(){
+      deal = $(this).attr("data-deal");
+      wrapper.setSelection([{'row': null, 'column': null}]);
+    }
+    );
 
   google.setOnLoadCallback(drawVisualization);
 
