@@ -3,7 +3,9 @@ require 'sinatra'
 require 'rack-flash'
 require 'active_model_monkeypatch'
 require 'deal'
+require 'visualization'
 require 'utility'
+require 'pry'
 
 class HighriseApp < Sinatra::Base
   enable :sessions
@@ -23,21 +25,27 @@ class HighriseApp < Sinatra::Base
 
   post "/deal/:deal_id" do
     @deal = Highrise::Deal.find(params[:deal_id])
-    @deal.update_forecast_data(request.POST)
+    @deal.update_forecast_data(request.POST['forecast']) if request.POST['forecast']
     @deal.attributes.reject!{|k,v| k == "party"}
-    saved = @deal.save
+    @deal.load(request.POST["deal"])
+    saved = @deal.save()
 
     if saved
       flash[:success] = "Saved!"
       redirect to("/")
     else
-      flash[:error] = "Couldn't save data to highrise. Try again."
+      flash[:error] = "Couldn't save data to Highrise. Try again."
       redirect to("/deal/#{params[:deal_id]}/edit")
     end
   end
 
   get "/" do
     @deals = Highrise::Deal.find(:all)
+    @viz = Visualization.new(@deals, :start_date => Date.today, :end_date => Date.today + 700)
     erb :index
+  end
+
+  error do
+    'Sorry there was a nasty error - ' + env['sinatra.error'].name
   end
 end

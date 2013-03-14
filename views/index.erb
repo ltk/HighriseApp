@@ -1,7 +1,10 @@
+<h1>Deal Forecast</h1>
+<div id="deal-forecast" style="width: 1100px; height: 500px;"></div>
 <h1>Deals</h1>
 <ul class="deals row">
+  <% i = 1 %>
   <% @deals.each do |d| %>
-    <li class="media span4">
+    <li class="media span4 deal-<%= i %>", data-deal="<%= i %>">
       <a class="pull-left" href="#">
         <img class="media-object" src="<%= d.parties.first.avatar_url %>">
       </a>
@@ -9,11 +12,64 @@
         <h4 class="media-heading"><a href="<%= @highrise_url %>/deals/<%= d.id %>" title="View <%= d.name %> on Highrise" target="_blank"><%= d.name %></a></h4>
         <h3><a href="<%= @highrise_url %>/companies/<%= d.parties.first.id %>" title="View <%= d.parties.first.name %> on Highrise" target="_blank"><%= d.parties.first.name %></a></h3>
         <h4>Start Date: <%= d.expected_start_date.strftime("%Y-%m-%d") %></h4>
-        <h4>Close Date: <%= d.expected_close_date.strftime("%Y-%m-%d") %></h4>
+        <h4>End Date: <%= d.expected_end_date.strftime("%Y-%m-%d") %></h4>
         <h4>Probability: <%= d.probability %>%</h4>
+        <h4>Average Rate: $<%= d.average_rate %></h4>
         <h4>Budget: $<%= comma_numbers(d.price) %></h4>
-        <a href="/deal/<%= d.id %>/edit" title="Edit Deal">Edit Forecast Data</a>
+        <a class="btn" href="/deal/<%= d.id %>/edit" title="Edit Deal">Edit Forecast Data</a>
       </div>
     </li>
+    <% i += 1 %>
   <% end %>
 </ul>
+<script type="text/javascript">
+var wrapper;
+
+function drawVisualization() {
+  // Create and populate the data table.
+  var data = google.visualization.arrayToDataTable(<%= @viz.data_array %>);
+
+  // Create and draw the visualization.
+  wrapper = new google.visualization.ColumnChart(document.getElementById('deal-forecast'))
+
+  google.visualization.events.addListener(wrapper, 'ready', onReady);
+
+  wrapper.draw(data,
+           {title: "Projects by by Month",
+            isStacked:true,
+            width:1100, height:500,
+            hAxis: {title: "Month"},
+            vAxis: {format: "$#,###"}}
+      );
+
+
+  function onReady() {
+    google.visualization.events.addListener(wrapper, 'onmouseover', overHandler);
+    google.visualization.events.addListener(wrapper, 'onmouseout', outHandler);
+  }
+
+  function overHandler(e) {
+    wrapper.setSelection([e]);
+    $("li.deal-" + e.column).addClass('active');
+  }
+
+  function outHandler(e) {
+    wrapper.setSelection([{'row': null, 'column': null}]);
+    $("li.deal-" + e.column).removeClass('active');
+  }
+}
+
+$(".deals li").hover(
+  function(){
+    deal = $(this).attr("data-deal")
+    wrapper.setSelection([{'row': null, 'column': deal}]);
+  },
+  function(){
+    deal = $(this).attr("data-deal");
+    wrapper.setSelection([{'row': null, 'column': null}]);
+  }
+  );
+
+google.setOnLoadCallback(drawVisualization);
+
+</script>

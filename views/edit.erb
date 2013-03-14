@@ -1,9 +1,11 @@
 <a href="/" title="Back to Deals">&laquo; Back to Deals</a>
 <form action="/deal/<%= @deal.id %>" method="post">
   <h1>Editing <%= @deal.name %></h1>
-  <p><strong>Close Date:</strong> <input type="date" name="date[expected_close_date]" value="<%= @deal.expected_close_date.strftime("%Y-%m-%d") %>"></p>
-  <p><strong>Start Date:</strong> <input type="date" name="date[expected_start_date]" value="<%= @deal.expected_start_date.strftime("%Y-%m-%d") %>"></p>
-  <p><strong>Probability:</strong> <span id="prob-view"><%= @deal.probability %></span>% <input type="range" value="<%= @deal.probability %>" name="int[probability]" min="0" max="100" onchange="updateProbView(this.value);" /></p>
+  <p><strong>End Date:</strong> <input type="date" name="forecast[date][expected_end_date]" value="<%= @deal.expected_end_date.strftime("%Y-%m-%d") %>"></p>
+  <p><strong>Start Date:</strong> <input type="date" name="forecast[date][expected_start_date]" value="<%= @deal.expected_start_date.strftime("%Y-%m-%d") %>"></p>
+  <p><strong>Probability:</strong> <span id="prob-view"><%= @deal.probability %></span>% <input type="range" value="<%= @deal.probability %>" name="forecast[int][probability]" min="0" max="100" onchange="updateProbView(this.value);" /></p>
+  <p><strong>Average Rate:</strong> $<input type="text" value="<%= @deal.average_rate %>" name="forecast[int][average_rate]" /></p>
+  <p><strong>Budget:</strong> $<input type="text" value="<%= @deal.price %>" name="deal[price]" /></p>
   <button type="submit" class="btn btn-primary">Save</button>
 </form>
 <script type="text/javascript">
