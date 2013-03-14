@@ -55,9 +55,9 @@
         <form action="/deal/<%= @deal.id %>" method="post">
           <a href="/" title="Back to Deals">View All Deals</a>
           <h1>Editing <%= @deal.name %></h1>
-          <p><strong>Close Date:</strong> <input type="date" name="close_date" value="<%= Date.parse(@deal.close_date).strftime("%Y-%m-%d") %>"></p>
-          <p><strong>Start Date:</strong> <input type="date" name="start_date" value="<%= Date.parse(@deal.start_date).strftime("%Y-%m-%d") %>"></p>
-          <p><strong>Probability:</strong> <input type="range" value="<%= @deal.probability %>" name="probability" min="0" max="100" /></p>
+          <p><strong>Close Date:</strong> <input type="date" name="date[expected_close_date]" value="<%= @deal.expected_close_date.strftime("%Y-%m-%d") %>"></p>
+          <p><strong>Start Date:</strong> <input type="date" name="date[expected_start_date]" value="<%= @deal.expected_start_date.strftime("%Y-%m-%d") %>"></p>
+          <p><strong>Probability:</strong> <input type="range" value="<%= @deal.probability %>" name="int[probability]" min="0" max="100" /></p>
           <button type="submit" class="btn btn-primary">Save</button>
         </form>
       </div>

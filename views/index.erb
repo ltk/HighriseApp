@@ -62,11 +62,11 @@
               <div class="media-body">
                 <h4 class="media-heading"><a href="<%= @highrise_url %>/deals/<%= d.id %>" title="View <%= d.name %> on Highrise" target="_blank"><%= d.name %></a></h4>
                 <h3><a href="<%= @highrise_url %>/companies/<%= d.parties.first.id %>" title="View <%= d.parties.first.name %> on Highrise" target="_blank"><%= d.parties.first.name %></a></h3>
-                <h4>Start Date: <%= Date.parse(d.start_date).strftime("%Y-%m-%d") %></h4>
-                <h4>Close Date: <%= Date.parse(d.close_date).strftime("%Y-%m-%d") %></h4>
-                <h4>Probability: <%= d.probability %></h4>
+                <h4>Start Date: <%= d.expected_start_date.strftime("%Y-%m-%d") %></h4>
+                <h4>Close Date: <%= d.expected_close_date.strftime("%Y-%m-%d") %></h4>
+                <h4>Probability: <%= d.probability %>%</h4>
                 <h4>Budget: $<%= comma_numbers(d.price) %></h4>
-                <a href="/deal/<%= d.id %>/edit" title="Edit Deal">Edit Deal</a>
+                <a href="/deal/<%= d.id %>/edit" title="Edit Deal">Edit Forecast Data</a>
               </div>
             </li>
           <% end %>
