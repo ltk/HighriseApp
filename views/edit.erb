@@ -1,68 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css" rel="stylesheet">
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" ></script>
-  <style type="text/css">
-    ul.deals {
-      list-style: none;
-      padding-top: 20px;
-    }
-
-    ul.deals li {
-      margin-top: 0px;
-      box-sizing: border-box;
-      position: relative;
-      top: 0;
-      -webkit-transition-property: top;
-      -webkit-transition-duration: 0.5s;
-    }
-
-    ul.deals li h2 {
-      font-size: 20px;
-      line-height: 20px;
-    }
-
-    ul.deals li h3 {
-      font-size: 18px;
-      font-weight: normal;
-      line-height: 18px;
-    }
-
-    ul.deals li h4 {
-      font-weight: normal;
-    }
-
-    ul.deals li h4 a {
-      font-weight: bold;
-    }
-
-    ul.deals li span.label {
-      font-size: 14px;
-      line-height: 17px;
-    }
-
-    ul.deals li.active {
-      position: relative;
-      top: -25px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="row">
-      <div class="span12">
-        <form action="/deal/<%= @deal.id %>" method="post">
-          <a href="/" title="Back to Deals">View All Deals</a>
-          <h1>Editing <%= @deal.name %></h1>
-          <p><strong>Close Date:</strong> <input type="date" name="date[expected_close_date]" value="<%= @deal.expected_close_date.strftime("%Y-%m-%d") %>"></p>
-          <p><strong>Start Date:</strong> <input type="date" name="date[expected_start_date]" value="<%= @deal.expected_start_date.strftime("%Y-%m-%d") %>"></p>
-          <p><strong>Probability:</strong> <input type="range" value="<%= @deal.probability %>" name="int[probability]" min="0" max="100" /></p>
-          <button type="submit" class="btn btn-primary">Save</button>
-        </form>
-      </div>
-    </div>
-  </div>
-
-</body>
-</html>
+<form action="/deal/<%= @deal.id %>" method="post">
+  <a href="/" title="Back to Deals">View All Deals</a>
+  <h1>Editing <%= @deal.name %></h1>
+  <p><strong>Close Date:</strong> <input type="date" name="date[expected_close_date]" value="<%= @deal.expected_close_date.strftime("%Y-%m-%d") %>"></p>
+  <p><strong>Start Date:</strong> <input type="date" name="date[expected_start_date]" value="<%= @deal.expected_start_date.strftime("%Y-%m-%d") %>"></p>
+  <p><strong>Probability:</strong> <input type="range" value="<%= @deal.probability %>" name="int[probability]" min="0" max="100" /></p>
+  <button type="submit" class="btn btn-primary">Save</button>
+</form>

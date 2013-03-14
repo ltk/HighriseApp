@@ -62,8 +62,6 @@ module HighriseExtension
 
 
   Highrise::Deal.class_eval do
-    # before_save :write_forecast_data
-
     delegate :expected_start_date, :expected_close_date, :probability, :to => :forecast_data
 
     def forecast_data
@@ -71,6 +69,7 @@ module HighriseExtension
     end
 
     def write_forecast_data
+      # How can I get this into a callback on save? before_save isn't working even after including ActiveResource::Callbacks.
       self.background = ForecastDataIO.write(self, :forecast_data, :background)
     end
 

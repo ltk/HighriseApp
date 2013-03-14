@@ -39,6 +39,8 @@ GEM
       method_source (~> 0.8)
       slop (~> 3.4)
     rack (1.4.1)
+    rack-flash3 (1.0.3)
+      rack
     rack-protection (1.2.0)
       rack
     rack-test (0.6.2)
@@ -77,6 +79,7 @@ DEPENDENCIES
   capybara
   highrise
   pry
+  rack-flash3
   rack-test
   rspec
   shoulda-matchers

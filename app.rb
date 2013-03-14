@@ -1,16 +1,19 @@
-require 'sinatra'
-require 'pry'
-require 'logger'
-
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), 'lib'))
+require 'sinatra'
+require 'rack-flash'
 require 'active_model_monkeypatch'
 require 'deal'
 require 'utility'
 
+require 'pry'
+require 'logger'
 
 ActiveResource::Base.logger = Logger.new(STDOUT)
 
 class HighriseApp < Sinatra::Base
+  enable :sessions
+  use Rack::Flash
+
   def boot_highrise
     secrets = YAML.load_file('config/secrets.yml')
 
@@ -28,7 +31,7 @@ class HighriseApp < Sinatra::Base
   post "/deal/:deal_id" do
     boot_highrise
 
-    deal = Highrise::Deal.find(params[:deal_id])
+    @deal = Highrise::Deal.find(params[:deal_id])
 
     request.POST.each do |type, array|
       array.each do |key, value|
@@ -36,15 +39,21 @@ class HighriseApp < Sinatra::Base
           when "int" then value.to_i
           when "date" then Date.parse(value)
         end
-        deal.forecast_data.send("#{key}=", value)
+        @deal.forecast_data.send("#{key}=", value)
       end
     end
 
-    deal.write_forecast_data
-    deal.attributes.reject!{|k,v| k == "party"}
-    deal.save
+    @deal.write_forecast_data
+    @deal.attributes.reject!{|k,v| k == "party"}
+    saved = @deal.save
 
-    redirect to("/")
+    if saved
+      flash[:success] = "Saved!"
+      redirect to("/")
+    else
+      flash[:error] = "Couldn't save data to highrise. Try again."
+      redirect to("/deal/#{params[:deal_id]}/edit")
+    end
   end
 
   get "/" do
